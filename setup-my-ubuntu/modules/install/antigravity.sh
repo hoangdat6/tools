@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+set -e
+
+echo "🌌 Installing Antigravity..."
+
+# Create keyrings directory
+sudo mkdir -p /etc/apt/keyrings
+
+# Add Antigravity GPG key
+curl -fsSL https://us-central1-apt.pkg.dev/doc/repo-signing-key.gpg | \
+    sudo gpg --dearmor -o /etc/apt/keyrings/antigravity-repo-key.gpg
+
+# Add Antigravity repository
+echo "deb [signed-by=/etc/apt/keyrings/antigravity-repo-key.gpg] https://us-central1-apt.pkg.dev/projects/antigravity-auto-updater-dev/ antigravity-debian main" | \
+    sudo tee /etc/apt/sources.list.d/antigravity.list > /dev/null
+
+# Install
+sudo apt update
+sudo apt install -y antigravity
+
+echo "✅ Antigravity installed!"

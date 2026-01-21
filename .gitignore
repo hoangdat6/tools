@@ -1,0 +1,11 @@
+# Ignore bundle files (installers)
+*.tar.gz
+*.zip
+
+# Ignore config files
+.setup-tools-config.json
+
+# Ignore temporary directories/files
+tmp/
+*.swp
+.DS_Store
