@@ -84,6 +84,9 @@ show_menu() {
     echo "│  [18] ☸️  Kubernetes Pack (kubectl, helm, k9s)                      │"
     echo "│  [19] 🗄️  DBeaver (Database Client)                                 │"
     echo "│  [20] 💬 Communication & Productivity (Telegram, Postman)          │"
+    echo "│  [21] 📦 Vagrant (VM Management)                                   │"
+    echo "│  [22] 💻 VirtualBox (VM Provider)                                  │"
+    echo "│  [23] 🎬 OBS Studio (Streaming & Recording)                        │"
     echo "├────────────────────────────────────────────────────────────────────┤"
     echo "│  [W]  🧙 Wizard Mode (Profile-based setup)                         │"
     echo "│  [H]  🔍 Health Check (Show installed tools)                       │"
@@ -233,6 +236,9 @@ main() {
             18) run_module "k8s" ;;
             19) run_module "dbeaver" ;;
             20) run_module "apps" ;;
+            21) run_module "vagrant" ;;
+            22) run_module "virtualbox" ;;
+            23) run_module "obs" ;;
             [Ww]) run_module "wizard" ;;
             [Hh]) run_module "health-check" ;;
             [Ee]) run_module "export-config" ;;

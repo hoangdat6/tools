@@ -27,6 +27,7 @@ show_node_menu() {
     echo "│  [6]  🗑️  Uninstall a Node version                                  │"
     echo "│  [7]  ⭐ Set default Node version                                  │"
     echo "│  [8]  ⚙️  Configure NVM for all terminals                           │"
+    echo "│  [9]  🧶 Install Yarn package manager                              │"
     echo "├────────────────────────────────────────────────────────────────────┤"
     echo "│  [B]  ⬅️  Back                                                      │"
     echo "└────────────────────────────────────────────────────────────────────┘"
@@ -165,6 +166,45 @@ export NVM_DIR="$HOME/.nvm"
     fi
 }
 
+install_yarn() {
+    load_nvm
+    
+    # Check if Node is available
+    if ! command -v node &> /dev/null; then
+        echo -e "${YELLOW}⚠️  Node.js is not installed. Please install Node.js first.${NC}"
+        return
+    fi
+    
+    echo -e "${BLUE}Select Yarn version to install:${NC}"
+    echo "  [1] Yarn Classic (v1.x) - via npm"
+    echo "  [2] Yarn Modern (v4+) - via corepack (recommended)"
+    echo ""
+    read -p "Select option [1/2]: " yarn_choice
+    
+    case "$yarn_choice" in
+        1)
+            echo "📥 Installing Yarn Classic via npm..."
+            npm install -g yarn
+            echo -e "${GREEN}✅ Yarn Classic installed!${NC}"
+            echo "   Version: $(yarn --version)"
+            ;;
+        2)
+            echo "📥 Enabling Corepack and installing Yarn Modern..."
+            corepack enable
+            corepack prepare yarn@stable --activate
+            echo -e "${GREEN}✅ Yarn Modern installed!${NC}"
+            echo "   Version: $(yarn --version)"
+            ;;
+        *)
+            echo "Invalid option"
+            return
+            ;;
+    esac
+    
+    echo ""
+    echo -e "${YELLOW}⚠️  Note: Run 'source ~/.nvm/nvm.sh' or open a new terminal to use yarn.${NC}"
+}
+
 # Main
 main() {
     # Quick install mode (no args or first run)
@@ -197,6 +237,7 @@ main() {
             6) uninstall_version ;;
             7) set_default ;;
             8) configure_nvm_global ;;
+            9) install_yarn ;;
             [Bb]) return ;;
             *) echo "Invalid option" ;;
         esac
