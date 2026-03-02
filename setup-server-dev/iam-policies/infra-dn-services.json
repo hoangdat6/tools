@@ -1,0 +1,102 @@
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "CloudFrontFullAccess",
+            "Effect": "Allow",
+            "Action": [
+                "cloudfront:*"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Sid": "S3FullAccess",
+            "Effect": "Allow",
+            "Action": [
+                "s3:*"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Sid": "EC2FullAccess",
+            "Effect": "Allow",
+            "Action": [
+                "ec2:*"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Sid": "LambdaFullAccess",
+            "Effect": "Allow",
+            "Action": [
+                "lambda:*"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Sid": "ECRFullAccess",
+            "Effect": "Allow",
+            "Action": [
+                "ecr:*"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Sid": "CloudWatchAccess",
+            "Effect": "Allow",
+            "Action": [
+                "logs:*",
+                "cloudwatch:*"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Sid": "Route53Access",
+            "Effect": "Allow",
+            "Action": [
+                "route53:*"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Sid": "ACMAccess",
+            "Effect": "Allow",
+            "Action": [
+                "acm:*"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Sid": "SSMAccess",
+            "Effect": "Allow",
+            "Action": [
+                "ssm:*"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Sid": "SecretsManagerAccess",
+            "Effect": "Allow",
+            "Action": [
+                "secretsmanager:*"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Sid": "KMSAccess",
+            "Effect": "Allow",
+            "Action": [
+                "kms:*"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Sid": "SupportAccess",
+            "Effect": "Allow",
+            "Action": [
+                "support:*"
+            ],
+            "Resource": "*"
+        }
+    ]
+}

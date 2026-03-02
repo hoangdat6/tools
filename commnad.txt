@@ -1,0 +1,2 @@
+# Remove all git in aws-modules
+find /home/dathv2/Documents/Solution/my-tools -type d -name ".git" -not -path "/home/dathv2/Documents/Solution/my-tools/.git"
