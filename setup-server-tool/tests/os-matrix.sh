@@ -21,6 +21,7 @@ run_case() {
     printf 'PASS %-28s %s\n' "$image" "$result"
 }
 
+run_case ubuntu:20.04 ubuntu apt
 run_case ubuntu:24.04 ubuntu apt
 run_case debian:12 debian apt
 run_case amazonlinux:2 amzn yum

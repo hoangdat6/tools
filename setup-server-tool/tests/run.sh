@@ -36,6 +36,7 @@ test_os() {
 }
 
 test_os ubuntu-24.04 ubuntu apt
+test_os ubuntu-20.04 ubuntu apt
 test_os debian-12 debian apt
 test_os amazon-linux-2 amzn yum
 test_os amazon-linux-2023 amzn dnf
@@ -126,6 +127,28 @@ if ! grep -Fqx 'apt-get update --allow-releaseinfo-change-label' "$apt_calls"; t
 fi
 rm -f "$apt_calls"
 ok "APT metadata retry is scoped to the changed field"
+
+old_curl_output="$(
+    SETUP_DRY_RUN=true
+    curl_supports_retry_all_errors() { return 1; }
+    download_file https://example.com/archive /tmp/setup-server-tool-test-download
+)"
+if grep -q -- '--retry-all-errors' <<<"$old_curl_output"; then
+    printf 'not ok - old curl fallback must omit --retry-all-errors\n' >&2
+    exit 1
+fi
+ok "old curl fallback omits unsupported retry option"
+
+new_curl_output="$(
+    SETUP_DRY_RUN=true
+    curl_supports_retry_all_errors() { return 0; }
+    download_file https://example.com/archive /tmp/setup-server-tool-test-download
+)"
+if ! grep -q -- '--retry-all-errors' <<<"$new_curl_output"; then
+    printf 'not ok - modern curl should use --retry-all-errors\n' >&2
+    exit 1
+fi
+ok "modern curl enables retry-all-errors"
 
 if command -v gpg >/dev/null 2>&1; then
     fingerprint="$(gpg --show-keys --with-colons "$TOOL_DIR/assets/aws-cli-public-key.asc" \

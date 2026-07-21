@@ -142,11 +142,19 @@ retry() {
 
 download_file() {
     local url="$1" output="$2"
+    local -a curl_args=(-fL --connect-timeout 15 --retry "$SETUP_RETRY_COUNT")
+    if curl_supports_retry_all_errors; then
+        curl_args+=(--retry-all-errors)
+    fi
     if is_true "$SETUP_DRY_RUN"; then
-        run_cmd curl -fL --retry "$SETUP_RETRY_COUNT" --retry-all-errors "$url" -o "$output"
+        run_cmd curl "${curl_args[@]}" "$url" -o "$output"
         return 0
     fi
-    retry curl -fL --connect-timeout 15 --retry 2 --retry-all-errors "$url" -o "$output"
+    retry curl "${curl_args[@]}" "$url" -o "$output"
+}
+
+curl_supports_retry_all_errors() {
+    curl --help all 2>/dev/null | grep -q -- '--retry-all-errors'
 }
 
 verify_sha256() {

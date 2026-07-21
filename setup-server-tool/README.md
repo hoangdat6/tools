@@ -8,7 +8,7 @@ preflight checks, configuration backups, and an installation manifest.
 
 | Operating system | Package manager | Tested by fixture |
 | --- | --- | --- |
-| Ubuntu 22.04/24.04 | apt | Yes |
+| Ubuntu 20.04/22.04/24.04 | apt | Yes |
 | Debian 12 | apt | Yes |
 | Amazon Linux 2 | yum | Yes |
 | Amazon Linux 2023 | dnf | Yes |
@@ -31,6 +31,8 @@ Only x86_64 and arm64 architectures are supported.
   health checks.
 - Idempotent base-package checks and scoped handling for APT repository
   release metadata changes.
+- Feature detection for older curl releases, including Ubuntu 20.04's curl
+  without `--retry-all-errors`.
 
 ## Quick start
 
@@ -135,6 +137,6 @@ job. Existing certificates are checked with `certbot renew --dry-run`.
 The fast tests cover OS detection, unsupported releases, argument order,
 conflicting profiles, pinned images, remote-script policy, Bash syntax, AWS
 dry-run cleanup, and the embedded AWS signing-key fingerprint. The Docker
-matrix executes detection inside real Ubuntu, Debian, Amazon Linux 2, and
-Amazon Linux 2023 images. Run the full dry-run on every target image before the
-first production rollout.
+matrix executes detection inside real Ubuntu 20.04/24.04, Debian, Amazon Linux
+2, and Amazon Linux 2023 images. Run the full dry-run on every target image
+before the first production rollout.
