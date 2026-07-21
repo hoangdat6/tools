@@ -24,6 +24,8 @@ INFRA_ROOT="${INFRA_ROOT:-}"
 SETUP_STATE_DIR="${SETUP_STATE_DIR:-}"
 
 SETUP_LOG_FILE="${SETUP_LOG_FILE:-}"
+COMMON_LIB_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SETUP_TOOL_ROOT="${SETUP_TOOL_ROOT:-$(cd "$COMMON_LIB_DIR/.." && pwd)}"
 
 OS_ID=""
 OS_VERSION_ID=""
@@ -45,7 +47,7 @@ resolve_managed_paths() {
     if [ -z "$SETUP_MANIFEST_FILE" ]; then
         SETUP_MANIFEST_FILE="$SETUP_STATE_DIR/state/manifest.tsv"
     fi
-    export INFRA_ROOT SETUP_STATE_DIR SETUP_LOG_FILE SETUP_MANIFEST_FILE
+    export INFRA_ROOT SETUP_STATE_DIR SETUP_LOG_FILE SETUP_MANIFEST_FILE SETUP_TOOL_ROOT
 }
 
 is_true() {

@@ -116,6 +116,16 @@ if ! grep -q "$HOME/sources/backend" <<<"$deploy_workspace_output"; then
 fi
 ok "deploy workspace uses infra and sources roots"
 
+if ! grep -q 'SETUP_TOOL_ROOT/templates/deploy-workspace' "$TOOL_DIR/modules/install/deploy-workspace.sh"; then
+    printf 'not ok - deploy workspace install module must resolve templates from setup tool root\n' >&2
+    exit 1
+fi
+if ! grep -q 'SETUP_TOOL_ROOT/templates/deploy-workspace' "$TOOL_DIR/modules/uninstall/deploy-workspace.sh"; then
+    printf 'not ok - deploy workspace uninstall module must resolve templates from setup tool root\n' >&2
+    exit 1
+fi
+ok "deploy workspace modules resolve templates from setup tool root"
+
 if grep -q 'cd ../sources' "$TOOL_DIR/templates/deploy-workspace/Makefile"; then
     printf 'not ok - deploy Makefile must not depend on caller working directory\n' >&2
     exit 1

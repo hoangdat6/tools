@@ -5,7 +5,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck disable=SC1091
 source "$SCRIPT_DIR/../../lib/common.sh"
 
-DEPLOY_TEMPLATE_DIR="${DEPLOY_TEMPLATE_DIR:-$SCRIPT_DIR/../../templates/deploy-workspace}"
+DEPLOY_TEMPLATE_DIR="${DEPLOY_TEMPLATE_DIR:-$SETUP_TOOL_ROOT/templates/deploy-workspace}"
 
 remove_if_unmodified() {
     local relative_path="$1"
