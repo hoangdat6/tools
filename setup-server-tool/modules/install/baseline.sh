@@ -43,8 +43,8 @@ configure_swap() {
 
 configure_logrotate() {
     install_packages logrotate
-    cat <<'EOF' | write_root_file /etc/logrotate.d/setup-server-tool
-/var/log/setup-server-tool.log {
+    cat <<EOF | write_root_file /etc/logrotate.d/setup-server-tool
+${SETUP_LOG_FILE} {
     weekly
     rotate 8
     compress
@@ -59,6 +59,7 @@ EOF
 main() {
     require_supported_os
     ensure_base_packages
+    resolve_managed_paths
     configure_time
     configure_hostname
     configure_swap

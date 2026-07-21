@@ -66,7 +66,7 @@ nvm_run() {
 main() {
     require_supported_os
     ensure_base_packages
-    resolve_target_user
+    resolve_managed_paths
     NVM_DIR="${NVM_DIR:-$TARGET_HOME/.nvm}"
     export NVM_DIR
     validate_versions

@@ -72,6 +72,7 @@ issue_certificate() {
 main() {
     require_supported_os
     ensure_base_packages
+    resolve_managed_paths
     install_certbot_packages
     ensure_renewal_timer
     install_deploy_hook

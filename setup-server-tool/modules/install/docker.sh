@@ -93,6 +93,7 @@ main() {
     require_supported_os
     validate_architecture
     ensure_base_packages
+    resolve_managed_paths
 
     if has_cmd docker && docker compose version >/dev/null 2>&1 && ! is_true "$SETUP_FORCE"; then
         print_success "Docker and Docker Compose are already installed."
@@ -111,8 +112,9 @@ main() {
     resolve_target_user
     if [ "$TARGET_USER" != "root" ] && ! id -nG "$TARGET_USER" | grep -qw docker; then
         as_root usermod -aG docker "$TARGET_USER"
-        print_warning "Added $TARGET_USER to docker group. Logout/login is required."
+        print_warning "Added $TARGET_USER to docker group. Re-login or run 'newgrp docker' before using docker without sudo in the current shell."
     fi
+    as_target_user mkdir -p "$TARGET_HOME/.docker"
 
     if is_true "$SETUP_DRY_RUN"; then
         record_manifest docker planned system

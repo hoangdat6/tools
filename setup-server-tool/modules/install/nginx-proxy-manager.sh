@@ -5,17 +5,38 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck disable=SC1091
 source "$SCRIPT_DIR/../../lib/common.sh"
 
-NPM_DIR="${NPM_DIR:-/opt/setup-server-tool/nginx-proxy-manager}"
+NPM_DIR="${NPM_DIR:-}"
 NPM_IMAGE="${NPM_IMAGE:-jc21/nginx-proxy-manager:2.15.0}"
 NPM_HTTP_PORT="${NPM_HTTP_PORT:-80}"
 NPM_HTTPS_PORT="${NPM_HTTPS_PORT:-443}"
 NPM_ADMIN_PORT="${NPM_ADMIN_PORT:-81}"
-NPM_ADMIN_BIND="${NPM_ADMIN_BIND:-127.0.0.1}"
+NPM_ADMIN_BIND="${NPM_ADMIN_BIND:-}"
 NPM_CONTAINER_NAME="${NPM_CONTAINER_NAME:-nginx-proxy-manager}"
+
+validate_admin_bind() {
+    [[ "$NPM_ADMIN_BIND" =~ ^([0-9]{1,3}(\.[0-9]{1,3}){3}|[A-Za-z0-9.-]+)$ ]] \
+        || fail "Invalid NPM_ADMIN_BIND: $NPM_ADMIN_BIND"
+}
+
+resolve_admin_bind() {
+    if [ -n "$NPM_ADMIN_BIND" ]; then
+        validate_admin_bind
+        return 0
+    fi
+    if is_true "$SETUP_NON_INTERACTIVE"; then
+        fail "NPM_ADMIN_BIND is required in non-interactive mode. Example: 0.0.0.0 or your public hostname."
+    fi
+    read -r -p "Nginx Proxy Manager admin bind address: " NPM_ADMIN_BIND
+    [ -n "$NPM_ADMIN_BIND" ] || fail "NPM_ADMIN_BIND cannot be empty."
+    validate_admin_bind
+}
 
 main() {
     require_supported_os
     ensure_docker_ready
+    resolve_managed_paths
+    [ -n "$NPM_DIR" ] || NPM_DIR="$INFRA_ROOT/nginx-proxy-manager"
+    resolve_admin_bind
 
     if docker ps -a --format '{{.Names}}' | grep -qx "$NPM_CONTAINER_NAME"; then
         local managed

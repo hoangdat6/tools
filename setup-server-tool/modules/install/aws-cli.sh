@@ -24,6 +24,7 @@ main() {
     require_supported_os
     validate_architecture
     ensure_base_packages
+    resolve_managed_paths
     install_packages gnupg
 
     if has_cmd aws && [ "$(installed_version)" = "$AWS_CLI_VERSION" ] && ! is_true "$SETUP_FORCE"; then

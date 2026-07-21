@@ -21,9 +21,15 @@ Only x86_64 and arm64 architectures are supported.
 - Docker Engine and pinned Docker Compose with checksum validation.
 - Pinned AWS CLI v2 with PGP signature verification.
 - Multiple Node.js versions via a checksum-verified NVM installation.
+- Automatic `test-ses` workspace deployment into `~/infra/test-ses` for the
+  detected target user, with npm dependencies installed in place.
+- Managed runtime artifacts, manifests, logs, compose files, and data
+  directories live under `~/infra` for the selected target user.
 - Native Nginx or a pinned Docker Nginx deployment.
-- Pinned Nginx Proxy Manager with its admin UI bound to localhost by default.
+- Pinned Nginx Proxy Manager with an explicit admin bind address requirement.
 - Certbot issuance, renewal timer/cron, dry-run renewal test, and reload hook.
+- Uninstall flows for every installable module, with conservative cleanup for
+  OS-level baseline and security changes.
 - Baseline profile: timezone, NTP, optional swap, hostname, and log rotation.
 - Security profile: admin user/key, SSH hardening, firewall, fail2ban, and
   automatic security updates.
@@ -47,15 +53,21 @@ Options can appear in any order:
 
 ```bash
 ./setup.sh --node-versions "20 22" --target-user ubuntu --yes nodejs
+./setup.sh --yes test-ses
 ./setup.sh --yes --nginx-mode docker nginx
 ./setup.sh --yes --web
 ./setup.sh --yes --security
+./setup.sh --yes --uninstall nginx-proxy-manager
 ./setup.sh --health
 ```
 
 The `--web` profile installs Docker and Nginx Proxy Manager. It deliberately
 does not install standalone Certbot because Nginx Proxy Manager owns its own
 Let's Encrypt lifecycle.
+
+`docker` access is granted by adding the target user to the `docker` group.
+The first shell after installation still needs a re-login or `newgrp docker`
+before `docker` works without `sudo`.
 
 ## Execution controls
 
@@ -68,10 +80,10 @@ Let's Encrypt lifecycle.
 | `--target-user USER` | Selects the NVM owner and Docker group member. |
 | `--log-file PATH` | Overrides the execution log. |
 | `--manifest-file PATH` | Overrides the installation manifest. |
+| `--uninstall` | Runs uninstall scripts for the selected profile or modules. |
 
-The default manifest is `/var/lib/setup-server-tool/manifest.tsv`. Root runs
-log to `/var/log/setup-server-tool.log`; non-root runs log below
-`~/.local/state/setup-server-tool/`.
+The default manifest is `~/infra/setup-server-tool/state/manifest.tsv`. The
+default log is `~/infra/setup-server-tool/state/setup.log`.
 
 When an APT repository changes signed release metadata such as `Label`, the
 tool reports the changed field and asks for confirmation. A retry allows only
@@ -96,8 +108,12 @@ Important variables:
 | `DOCKER_COMPOSE_VERSION` | `v5.1.4` | Compose fallback binary release. |
 | `NVM_VERSION` | `v0.40.6` | Checksum-pinned NVM release. |
 | `NODE_VERSIONS` | `22` | Space-separated Node.js versions. |
+| `INFRA_ROOT` | `~/infra` | Root directory for managed artifacts owned by the target user. |
+| `TEST_SES_SOURCE_DIR` | `../test-ses` | Source directory copied into `~/infra/test-ses`. |
+| `TEST_SES_TARGET_DIR` | `~/infra/test-ses` | Deployment path for the target user's SES test workspace. |
 | `NGINX_MODE` | `apt` | `apt` or `docker`. |
-| `NPM_ADMIN_BIND` | `127.0.0.1` | NPM admin listener address. |
+| `NPM_ADMIN_BIND` | empty | Required bind address for the NPM admin listener. |
+| `NPM_ADMIN_PORT` | `81` | NPM admin listener port. |
 | `CERTBOT_DOMAINS` | empty | Space-separated native Nginx certificate domains. |
 | `CERTBOT_EMAIL` | empty | Required when issuing a certificate. |
 | `SERVER_TIMEZONE` | `UTC` | Baseline system timezone. |
@@ -124,6 +140,32 @@ CERTBOT_EMAIL="admin@example.com" \
 
 The module enables a systemd timer when available, otherwise installs a cron
 job. Existing certificates are checked with `certbot renew --dry-run`.
+
+## Test SES
+
+```bash
+./setup.sh --yes --target-user ubuntu test-ses
+```
+
+The module copies the local [`test-ses`](../test-ses) workspace into the
+target user's `~/infra/test-ses`. When `--target-user` is omitted, the tool
+resolves the default OS user such as `ubuntu` or `ec2-user` from the active
+session and installs there.
+
+## Uninstall
+
+```bash
+./setup.sh --yes --uninstall docker
+./setup.sh --yes --uninstall nginx-proxy-manager test-ses
+./setup.sh --yes --uninstall --all
+```
+
+Package-managed binaries such as Docker Engine, AWS CLI, native Nginx, and
+Certbot are removed with the OS package manager or vendor uninstallers.
+Managed artifacts under `~/infra` are deleted by the module uninstallers.
+`baseline` and `security` uninstallers remove only the files and services that
+the tool manages directly; they do not blindly revert hostname, timezone,
+firewall rules, or administrative users.
 
 ## Validation
 

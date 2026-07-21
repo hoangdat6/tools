@@ -52,6 +52,7 @@ ok "unsupported OS fails"
 source "$TOOL_DIR/setup.sh"
 ACTION=""
 MODULE_QUEUE=()
+MODULE_MODE=install
 SETUP_DRY_RUN=false
 NODE_VERSIONS=22
 TARGET_USER=""
@@ -60,6 +61,32 @@ assert_eq all "$ACTION" "profile parsing is order independent"
 assert_eq true "$SETUP_DRY_RUN" "dry-run parsing"
 assert_eq deploy "$TARGET_USER" "target-user parsing"
 assert_eq "20 22" "$NODE_VERSIONS" "node version parsing"
+
+if ! declare -f install_all | grep -q 'run_module test-ses'; then
+    printf 'not ok - core stack must include test-ses deployment\n' >&2
+    exit 1
+fi
+ok "core stack includes test-ses deployment"
+
+ACTION=""
+MODULE_QUEUE=()
+MODULE_MODE=install
+parse_args --uninstall docker nginx
+assert_eq uninstall "$MODULE_MODE" "uninstall mode parsing"
+assert_eq 2 "${#MODULE_QUEUE[@]}" "uninstall module queue parsing"
+
+ACTION=""
+MODULE_QUEUE=()
+MODULE_MODE=install
+parse_args --uninstall all
+execute_request >/dev/null 2>&1 || true
+assert_eq all "$ACTION" "positional uninstall profile parsing"
+
+if ! declare -f uninstall_all | grep -q 'run_module test-ses'; then
+    printf 'not ok - uninstall all must include test-ses cleanup\n' >&2
+    exit 1
+fi
+ok "uninstall all includes test-ses cleanup"
 
 # shellcheck disable=SC2034
 if (ACTION=""; MODULE_QUEUE=(); parse_args --all --web) >/dev/null 2>&1; then
@@ -87,7 +114,7 @@ fi
 ok "remote scripts are not piped to a shell"
 
 bash -n "$TOOL_DIR/setup.sh" "$TOOL_DIR/lib/common.sh" \
-    "$TOOL_DIR"/modules/install/*.sh "$TOOL_DIR"/modules/utils/*.sh
+    "$TOOL_DIR"/modules/install/*.sh "$TOOL_DIR"/modules/uninstall/*.sh "$TOOL_DIR"/modules/utils/*.sh
 ok "all Bash files pass syntax validation"
 
 aws_dry_output="$(TARGET_USER="$(id -un)" "$TOOL_DIR/setup.sh" --dry-run aws-cli 2>&1)"
@@ -149,6 +176,59 @@ if ! grep -q -- '--retry-all-errors' <<<"$new_curl_output"; then
     exit 1
 fi
 ok "modern curl enables retry-all-errors"
+
+test_ses_dry_output="$(
+    TARGET_USER="$(id -un)" \
+    TARGET_HOME="$HOME" \
+    SETUP_DRY_RUN=true \
+    "$TOOL_DIR/setup.sh" test-ses 2>&1
+)"
+if ! grep -q "$HOME/infra/test-ses" <<<"$test_ses_dry_output"; then
+    printf 'not ok - test-ses should target the current user infra directory by default\n' >&2
+    exit 1
+fi
+ok "test-ses targets the detected user infra directory"
+
+custom_test_ses_output="$(
+    TARGET_USER="$(id -un)" \
+    TARGET_HOME="$HOME" \
+    TEST_SES_TARGET_DIR=/tmp/custom-test-ses \
+    SETUP_DRY_RUN=true \
+    "$TOOL_DIR/setup.sh" test-ses 2>&1
+)"
+if ! grep -q '/tmp/custom-test-ses' <<<"$custom_test_ses_output"; then
+    printf 'not ok - test-ses should honor TEST_SES_TARGET_DIR override\n' >&2
+    exit 1
+fi
+ok "test-ses honors target directory override"
+
+npm_noninteractive_output="$({
+    TARGET_USER="$(id -un)" \
+    TARGET_HOME="$HOME" \
+    INFRA_ROOT="$HOME/infra" \
+    SETUP_DRY_RUN=true \
+    SETUP_NON_INTERACTIVE=true \
+    "$TOOL_DIR/setup.sh" nginx-proxy-manager
+} 2>&1 || true)"
+if ! grep -q 'NPM_ADMIN_BIND is required in non-interactive mode' <<<"$npm_noninteractive_output"; then
+    printf 'not ok - nginx-proxy-manager must require NPM_ADMIN_BIND in non-interactive mode\n' >&2
+    exit 1
+fi
+ok "nginx-proxy-manager requires admin bind in non-interactive mode"
+
+npm_dry_output="$(
+    TARGET_USER="$(id -un)" \
+    TARGET_HOME="$HOME" \
+    INFRA_ROOT="$HOME/infra" \
+    SETUP_DRY_RUN=true \
+    NPM_ADMIN_BIND=0.0.0.0 \
+    "$TOOL_DIR/setup.sh" nginx-proxy-manager 2>&1 || true
+)"
+if ! grep -q "$HOME/infra/nginx-proxy-manager" <<<"$npm_dry_output"; then
+    printf 'not ok - nginx-proxy-manager artifacts should live under infra\n' >&2
+    exit 1
+fi
+ok "nginx-proxy-manager artifacts live under infra"
 
 if command -v gpg >/dev/null 2>&1; then
     fingerprint="$(gpg --show-keys --with-colons "$TOOL_DIR/assets/aws-cli-public-key.asc" \

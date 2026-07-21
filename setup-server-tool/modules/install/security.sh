@@ -140,6 +140,7 @@ EOF
 main() {
     require_supported_os
     ensure_base_packages
+    resolve_managed_paths
     configure_admin_user
     configure_fail2ban
     configure_firewall

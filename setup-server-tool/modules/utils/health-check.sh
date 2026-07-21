@@ -60,7 +60,7 @@ main() {
     check_cmd "Nginx" nginx
     check_cmd "Certbot" certbot
 
-    resolve_target_user
+    resolve_managed_paths
     if [ -s "$TARGET_HOME/.nvm/nvm.sh" ]; then
         local nvm_version node_version npm_version
         # shellcheck disable=SC2016
@@ -74,6 +74,11 @@ main() {
         printf '%-26s %s\n' "npm ($TARGET_USER)" "$npm_version"
     else
         printf '%-26s %s\n' "NVM ($TARGET_USER)" "not installed"
+    fi
+    if id -nG "$TARGET_USER" | grep -qw docker; then
+        printf '%-26s %s\n' "Docker group ($TARGET_USER)" "present"
+    else
+        printf '%-26s %s\n' "Docker group ($TARGET_USER)" "missing"
     fi
 
     check_service docker

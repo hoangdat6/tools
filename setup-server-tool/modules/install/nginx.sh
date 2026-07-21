@@ -6,7 +6,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/../../lib/common.sh"
 
 NGINX_MODE="${NGINX_MODE:-apt}"
-NGINX_DIR="${NGINX_DIR:-/opt/setup-server-tool/nginx}"
+NGINX_DIR="${NGINX_DIR:-}"
 NGINX_IMAGE="${NGINX_IMAGE:-nginx:1.28.0-alpine}"
 NGINX_CONTAINER_NAME="${NGINX_CONTAINER_NAME:-setup-server-nginx}"
 NGINX_HTTP_PORT="${NGINX_HTTP_PORT:-80}"
@@ -60,6 +60,7 @@ EOF
 
 install_docker_nginx() {
     ensure_docker_ready
+    [ -n "$NGINX_DIR" ] || NGINX_DIR="$INFRA_ROOT/nginx"
     if docker ps -a --format '{{.Names}}' | grep -qx "$NGINX_CONTAINER_NAME"; then
         container_is_managed || fail "Container $NGINX_CONTAINER_NAME exists but is not managed by this tool."
     else
@@ -95,6 +96,7 @@ EOF
 main() {
     require_supported_os
     ensure_base_packages
+    resolve_managed_paths
     case "$NGINX_MODE" in
         apt|native|system) install_native_nginx ;;
         docker) install_docker_nginx ;;

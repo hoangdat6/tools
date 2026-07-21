@@ -17,23 +17,36 @@ SETUP_FORCE="${SETUP_FORCE:-false}"
 SETUP_RETRY_COUNT="${SETUP_RETRY_COUNT:-3}"
 SETUP_MIN_DISK_MB="${SETUP_MIN_DISK_MB:-2048}"
 SETUP_LOG_INITIALIZED="${SETUP_LOG_INITIALIZED:-false}"
-SETUP_MANIFEST_FILE="${SETUP_MANIFEST_FILE:-/var/lib/setup-server-tool/manifest.tsv}"
+SETUP_MANIFEST_FILE="${SETUP_MANIFEST_FILE:-}"
 OS_RELEASE_FILE="${OS_RELEASE_FILE:-/etc/os-release}"
 TARGET_USER="${TARGET_USER:-}"
+INFRA_ROOT="${INFRA_ROOT:-}"
+SETUP_STATE_DIR="${SETUP_STATE_DIR:-}"
 
-if [ -z "${SETUP_LOG_FILE:-}" ]; then
-    if [ "$(id -u)" -eq 0 ]; then
-        SETUP_LOG_FILE="/var/log/setup-server-tool.log"
-    else
-        SETUP_LOG_FILE="${XDG_STATE_HOME:-$HOME/.local/state}/setup-server-tool/setup.log"
-    fi
-fi
+SETUP_LOG_FILE="${SETUP_LOG_FILE:-}"
 
 OS_ID=""
 OS_VERSION_ID=""
 OS_PRETTY_NAME=""
 PKG_MANAGER=""
 TARGET_HOME=""
+
+resolve_managed_paths() {
+    resolve_target_user
+    if [ -z "$INFRA_ROOT" ]; then
+        INFRA_ROOT="$TARGET_HOME/infra"
+    fi
+    if [ -z "$SETUP_STATE_DIR" ]; then
+        SETUP_STATE_DIR="$INFRA_ROOT/setup-server-tool"
+    fi
+    if [ -z "$SETUP_LOG_FILE" ]; then
+        SETUP_LOG_FILE="$SETUP_STATE_DIR/state/setup.log"
+    fi
+    if [ -z "$SETUP_MANIFEST_FILE" ]; then
+        SETUP_MANIFEST_FILE="$SETUP_STATE_DIR/state/manifest.tsv"
+    fi
+    export INFRA_ROOT SETUP_STATE_DIR SETUP_LOG_FILE SETUP_MANIFEST_FILE
+}
 
 is_true() {
     case "${1:-false}" in
@@ -108,6 +121,7 @@ as_root() {
 
 init_runtime() {
     is_true "$SETUP_LOG_INITIALIZED" && return 0
+    resolve_managed_paths
     SETUP_LOG_INITIALIZED=true
     export SETUP_LOG_INITIALIZED SETUP_LOG_FILE
 
@@ -280,6 +294,16 @@ install_packages() {
     esac
 }
 
+remove_packages() {
+    [ "$#" -gt 0 ] || return 0
+    case "$PKG_MANAGER" in
+        apt) as_root env DEBIAN_FRONTEND=noninteractive apt-get remove -y "$@" ;;
+        dnf) as_root dnf remove -y "$@" ;;
+        yum) as_root yum remove -y "$@" ;;
+        *) fail "Unsupported package manager: $PKG_MANAGER" ;;
+    esac
+}
+
 enable_service() {
     local service="$1"
     has_cmd systemctl || fail "systemctl is required to manage $service"
@@ -351,6 +375,39 @@ as_target_user_read() {
     else
         sudo -u "$TARGET_USER" env HOME="$TARGET_HOME" "$@"
     fi
+}
+
+remove_target_file() {
+    local path="$1"
+    is_true "$SETUP_DRY_RUN" && run_cmd rm -f "$path" && return 0
+    as_target_user bash -lc 'rm -f "$1"' _ "$path"
+}
+
+remove_target_dir() {
+    local path="$1"
+    is_true "$SETUP_DRY_RUN" && run_cmd rm -rf "$path" && return 0
+    as_root rm -rf "$path"
+}
+
+remove_root_file() {
+    local path="$1"
+    [ -e "$path" ] || return 0
+    as_root rm -f "$path"
+}
+
+remove_root_dir() {
+    local path="$1"
+    [ -e "$path" ] || return 0
+    as_root rm -rf "$path"
+}
+
+remove_root_line() {
+    local line="$1" destination="$2" tmp_file
+    [ -f "$destination" ] || return 0
+    tmp_file="$(mktemp)"
+    grep -Fvx "$line" "$destination" > "$tmp_file" || true
+    as_root install -D -m 0644 "$tmp_file" "$destination"
+    rm -f "$tmp_file"
 }
 
 write_root_file() {
