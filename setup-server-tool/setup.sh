@@ -39,6 +39,7 @@ run_module() {
 
 install_all() {
     run_module preflight
+    run_module deploy-workspace
     run_module docker
     run_module aws-cli
     run_module nodejs
@@ -64,6 +65,7 @@ uninstall_all() {
     run_module nginx-proxy-manager
     run_module nginx
     run_module test-ses
+    run_module deploy-workspace
     run_module nodejs
     run_module aws-cli
     run_module docker
@@ -96,6 +98,7 @@ show_menu() {
     printf '%s\n' '│  [7] Certbot + auto renew                                         │'
     printf '%s\n' '│  [8] Baseline + security profile                                  │'
     printf '%s\n' '│  [9] Test SES workspace                                           │'
+    printf '%s\n' '│  [10] App deploy workspace                                        │'
     printf '%s\n' '├────────────────────────────────────────────────────────────────────┤'
     printf '%s\n' '│  [A] Install core stack                                           │'
     printf '%s\n' '│  [W] Install web proxy stack                                      │'
@@ -112,7 +115,7 @@ show_help() {
 Usage: ./setup.sh [OPTIONS] [module ...]
 
 Profiles:
-  --all, -a                    Docker, AWS CLI, Node.js, Test SES, Nginx, Certbot
+  --all, -a                    Deploy workspace, Docker, AWS CLI, Node.js, Test SES, Nginx, Certbot
   --web, -w                    Docker and Nginx Proxy Manager
   --security, -s               Baseline and security hardening profile
   --uninstall, -u              Uninstall the selected profile or modules
@@ -133,7 +136,7 @@ Options:
   --help, -h                   Show this help
 
 Modules:
-  preflight docker aws-cli nodejs test-ses nginx nginx-proxy-manager certbot
+  preflight deploy-workspace docker aws-cli nodejs test-ses nginx nginx-proxy-manager certbot
   baseline security health-check
 
 Examples:
@@ -244,6 +247,7 @@ interactive_menu() {
             7) run_module certbot ;;
             8) install_security_profile ;;
             9) run_module test-ses ;;
+            10) run_module deploy-workspace ;;
             [Aa]) install_all ;;
             [Ww]) install_web_stack ;;
             [Uu])

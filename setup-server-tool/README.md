@@ -23,6 +23,8 @@ Only x86_64 and arm64 architectures are supported.
 - Multiple Node.js versions via a checksum-verified NVM installation.
 - Automatic `test-ses` workspace deployment into `~/infra/test-ses` for the
   detected target user, with npm dependencies installed in place.
+- App deployment workspace templates for `~/infra` and source directories
+  under `~/sources`, with idempotent copy behavior.
 - Managed runtime artifacts, manifests, logs, compose files, and data
   directories live under `~/infra` for the selected target user.
 - Native Nginx or a pinned Docker Nginx deployment.
@@ -54,6 +56,7 @@ Options can appear in any order:
 ```bash
 ./setup.sh --node-versions "20 22" --target-user ubuntu --yes nodejs
 ./setup.sh --yes test-ses
+./setup.sh --yes deploy-workspace
 ./setup.sh --yes --nginx-mode docker nginx
 ./setup.sh --yes --web
 ./setup.sh --yes --security
@@ -109,6 +112,7 @@ Important variables:
 | `NVM_VERSION` | `v0.40.6` | Checksum-pinned NVM release. |
 | `NODE_VERSIONS` | `22` | Space-separated Node.js versions. |
 | `INFRA_ROOT` | `~/infra` | Root directory for managed artifacts owned by the target user. |
+| `SOURCES_ROOT` | `~/sources` | Root directory for application source checkouts. |
 | `TEST_SES_SOURCE_DIR` | `../test-ses` | Source directory copied into `~/infra/test-ses`. |
 | `TEST_SES_TARGET_DIR` | `~/infra/test-ses` | Deployment path for the target user's SES test workspace. |
 | `NGINX_MODE` | `apt` | `apt` or `docker`. |
@@ -151,6 +155,23 @@ The module copies the local [`test-ses`](../test-ses) workspace into the
 target user's `~/infra/test-ses`. When `--target-user` is omitted, the tool
 resolves the default OS user such as `ubuntu` or `ec2-user` from the active
 session and installs there.
+
+## App deployment workspace
+
+```bash
+./setup.sh --yes --target-user ubuntu deploy-workspace
+```
+
+The module copies the templates from `templates/deploy-workspace` without
+overwriting existing files. It creates `~/infra/Makefile`, environment files
+under `~/infra/env`, app Compose examples, and empty backend/frontend source
+directories under `~/sources`. Nginx Proxy Manager remains owned by its own
+module at `~/infra/nginx-proxy-manager`.
+
+The generated Makefile resolves paths from its own location, so commands such
+as `make -C ~/infra be` behave the same from any working directory. Project
+specific paths, Compose service names, and the backend deploy command live in
+`~/infra/env/deploy.env`.
 
 ## Uninstall
 

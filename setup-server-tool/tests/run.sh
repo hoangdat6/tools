@@ -68,6 +68,12 @@ if ! declare -f install_all | grep -q 'run_module test-ses'; then
 fi
 ok "core stack includes test-ses deployment"
 
+if ! declare -f install_all | grep -q 'run_module deploy-workspace'; then
+    printf 'not ok - core stack must include deploy workspace setup\n' >&2
+    exit 1
+fi
+ok "core stack includes deploy workspace setup"
+
 ACTION=""
 MODULE_QUEUE=()
 MODULE_MODE=install
@@ -87,6 +93,34 @@ if ! declare -f uninstall_all | grep -q 'run_module test-ses'; then
     exit 1
 fi
 ok "uninstall all includes test-ses cleanup"
+
+if ! declare -f uninstall_all | grep -q 'run_module deploy-workspace'; then
+    printf 'not ok - uninstall all must include deploy workspace cleanup\n' >&2
+    exit 1
+fi
+ok "uninstall all includes deploy workspace cleanup"
+
+deploy_workspace_output="$(
+    TARGET_USER="$(id -un)" \
+    TARGET_HOME="$HOME" \
+    SETUP_DRY_RUN=true \
+    "$TOOL_DIR/setup.sh" deploy-workspace 2>&1
+)"
+if ! grep -q "$HOME/infra/Makefile" <<<"$deploy_workspace_output"; then
+    printf 'not ok - deploy workspace should install Makefile under infra\n' >&2
+    exit 1
+fi
+if ! grep -q "$HOME/sources/backend" <<<"$deploy_workspace_output"; then
+    printf 'not ok - deploy workspace should create backend source directory\n' >&2
+    exit 1
+fi
+ok "deploy workspace uses infra and sources roots"
+
+if grep -q 'cd ../sources' "$TOOL_DIR/templates/deploy-workspace/Makefile"; then
+    printf 'not ok - deploy Makefile must not depend on caller working directory\n' >&2
+    exit 1
+fi
+ok "deploy Makefile uses stable absolute paths"
 
 # shellcheck disable=SC2034
 if (ACTION=""; MODULE_QUEUE=(); parse_args --all --web) >/dev/null 2>&1; then

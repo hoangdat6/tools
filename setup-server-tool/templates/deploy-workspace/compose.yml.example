@@ -1,0 +1,6 @@
+services:
+  frontend:
+    image: your-frontend-image:1.0.0
+    restart: unless-stopped
+    env_file:
+      - ./env/.env.fe
